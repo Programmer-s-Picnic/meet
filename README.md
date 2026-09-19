@@ -66,3 +66,18 @@ Either participant can press Request Browser Control. The other participant must
 The workspace accepts only approved HTTPS pages under Learn With Champak and Programmer's Picnic.
 
 Because the editors are on a different web origin from the GitHub Pages meeting app, browser security prevents the Meet page from directly injecting clicks or keystrokes inside those editor documents. Full remote editing inside the existing editors needs a small window.postMessage control bridge added to the editor pages themselves.
+
+
+## Peer-to-peer Ludo
+
+Connected participants can open **Play Ludo** inside the meeting.
+
+- Host is Red; joining participant is Blue
+- Four tokens per player
+- Roll 6 to leave the yard
+- Rolling 6 gives another turn
+- Captures return the opponent token to its yard
+- Safe squares cannot be captured
+- Exact roll required to finish
+- Dice, moves, captures, turns, restarts, and winner state are synchronized through the existing WebRTC data channel
+- No game server or database is required
