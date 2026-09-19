@@ -2,8 +2,8 @@ const $=id=>document.getElementById(id);
 const statusEl=$("status"),joinCard=$("joinCard"),meeting=$("meeting");
 const hostTab=$("hostTab"),guestTab=$("guestTab"),hostPanel=$("hostPanel"),guestPanel=$("guestPanel"),modeTabs=$("modeTabs");
 const joinHeading=$("joinHeading"),joinSubheading=$("joinSubheading");
-const startHostBtn=$("startHostBtn"),hostStep1=$("hostStep1"),hostStep2=$("hostStep2"),inviteLink=$("inviteLink"),copyInviteBtn=$("copyInviteBtn"),shareInviteBtn=$("shareInviteBtn"),replyInput=$("replyInput"),finishHostBtn=$("finishHostBtn");
-const guestInviteInput=$("guestInviteInput"),guestManualBox=$("guestManualBox"),linkedInviteBox=$("linkedInviteBox"),joinBtn=$("joinBtn"),guestReplyBox=$("guestReplyBox"),guestReplyCode=$("guestReplyCode"),copyReplyBtn=$("copyReplyBtn");
+const startHostBtn=$("startHostBtn"),hostStep1=$("hostStep1"),hostStep2=$("hostStep2"),inviteLink=$("inviteLink"),copyInviteBtn=$("copyInviteBtn"),shareInviteBtn=$("shareInviteBtn"),whatsappInviteBtn=$("whatsappInviteBtn"),replyInput=$("replyInput"),finishHostBtn=$("finishHostBtn");
+const guestInviteInput=$("guestInviteInput"),guestManualBox=$("guestManualBox"),linkedInviteBox=$("linkedInviteBox"),joinBtn=$("joinBtn"),guestReplyBox=$("guestReplyBox"),guestReplyCode=$("guestReplyCode"),copyReplyBtn=$("copyReplyBtn"),whatsappReplyBtn=$("whatsappReplyBtn");
 const remoteVideo=$("remoteVideo"),remoteEmpty=$("remoteEmpty"),localShareBox=$("localShareBox"),localShareVideo=$("localShareVideo");
 const micBtn=$("micBtn"),shareBtn=$("shareBtn"),playSoundBtn=$("playSoundBtn"),requestControlBtn=$("requestControlBtn"),hangupBtn=$("hangupBtn");
 const controlRequest=$("controlRequest"),allowControlBtn=$("allowControlBtn"),denyControlBtn=$("denyControlBtn"),remotePointer=$("remotePointer"),remoteControlBadge=$("remoteControlBadge");
@@ -218,6 +218,40 @@ async function shareInvite(){
   await copyTextValue(url,shareInviteBtn);
 }
 
+function openWhatsApp(message){
+  const whatsappUrl="https://wa.me/?text="+encodeURIComponent(message);
+  window.open(whatsappUrl,"_blank","noopener,noreferrer");
+}
+
+function sendInviteOnWhatsApp(){
+  const url=inviteLink.value.trim();
+  if(!url)return;
+  const message=[
+    "Learn With Champak Meet",
+    "",
+    "Please join my meeting using this link:",
+    url,
+    "",
+    "No camera is required. Open the link and press Join This Meeting."
+  ].join("\n");
+  openWhatsApp(message);
+}
+
+function sendReplyOnWhatsApp(){
+  const reply=guestReplyCode.value.trim();
+  if(!reply)return;
+  const message=[
+    "Learn With Champak Meet",
+    "",
+    "I opened your meeting invite. Here is my reply code:",
+    "",
+    reply,
+    "",
+    "Paste this into the meeting page and press Connect."
+  ].join("\n");
+  openWhatsApp(message);
+}
+
 function toggleMic(){
   if(!micTrack)return;
   micEnabled=!micEnabled;micTrack.enabled=micEnabled;micBtn.textContent=micEnabled?"Mute":"Unmute";
@@ -296,7 +330,9 @@ joinBtn.onclick=joinMeeting;
 finishHostBtn.onclick=finishHost;
 copyInviteBtn.onclick=()=>copyTextValue(inviteLink.value,copyInviteBtn);
 shareInviteBtn.onclick=shareInvite;
+whatsappInviteBtn.onclick=sendInviteOnWhatsApp;
 copyReplyBtn.onclick=()=>copyTextValue(guestReplyCode.value,copyReplyBtn);
+whatsappReplyBtn.onclick=sendReplyOnWhatsApp;
 micBtn.onclick=toggleMic;
 shareBtn.onclick=shareScreen;
 playSoundBtn.onclick=playRemoteSound;
