@@ -4,24 +4,67 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0b57d0">
-  <meta name="description" content="Learn With Champak Meet - audio-first peer-to-peer teaching, screen sharing and remote pointer.">
-  <title>Learn With Champak Meet</title>
+  <meta name="description" content="Learn With Champak Live Classroom for Python, DSA, AI/ML and coding help with audio, screen sharing and browser workspace.">
+  <meta property="og:title" content="Learn With Champak Live Classroom">
+  <meta property="og:description" content="Learn coding live with audio, screen sharing, editors and practical project guidance.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://programmer-s-picnic.github.io/meet/">
+  <title>Learn With Champak Live Classroom</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="topbar">
-  <div>
-    <h1>Learn With Champak Meet</h1>
-    <p>Audio • Screen sharing • Remote pointer</p>
+  <a class="brand-lockup" href="https://www.learnwithchampak.live/" target="_blank" rel="noopener">
+    <span class="brand-mark">LWC</span>
+    <span>
+      <strong>Learn With Champak</strong>
+      <small>Live Classroom</small>
+    </span>
+  </a>
+  <div class="topbar-right">
+    <a class="top-link" href="https://www.learnwithchampak.live/#onlinewithchampak" target="_blank" rel="noopener">Explore Classes</a>
+    <span id="status" class="status">Ready</span>
   </div>
-  <span id="status" class="status">Ready</span>
 </header>
 
 <main class="wrap">
+  <section class="brand-hero">
+    <div class="hero-copy">
+      <span class="eyebrow">LEARN WITH CHAMPAK • LIVE CODING</span>
+      <h1>Learn coding live. Build real projects.</h1>
+      <p>One focused classroom for Python, DSA, AI/ML, C# and practical coding help—with audio, screen sharing and your editors built into the session.</p>
+      <div class="hero-actions">
+        <a class="cta primary-cta" href="https://www.learnwithchampak.live/#onlinewithchampak" target="_blank" rel="noopener">Explore Online Classes</a>
+        <a class="cta ghost-cta" href="https://www.learnwithchampak.live/" target="_blank" rel="noopener">Visit Learn With Champak</a>
+      </div>
+      <div class="topic-pills" aria-label="Learning topics">
+        <span>Python</span><span>DSA</span><span>AI / ML</span><span>C#</span><span>Projects</span>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-top">
+        <span class="live-dot"></span>
+        <strong>Live Classroom</strong>
+      </div>
+      <div class="hero-card-stat">
+        <strong>No camera required</strong>
+        <span>Audio-first and distraction-free</span>
+      </div>
+      <div class="hero-card-stat">
+        <strong>Code while you learn</strong>
+        <span>Python and C# editors inside the workspace</span>
+      </div>
+      <div class="hero-card-stat">
+        <strong>Share • Explain • Practice</strong>
+        <span>Screen sharing, chat and browser control</span>
+      </div>
+    </div>
+  </section>
+
   <section id="joinCard" class="join-card">
     <div class="join-heading">
-      <h2 id="joinHeading">Join a meeting</h2>
-      <p id="joinSubheading">No camera required. Microphone permission is optional.</p>
+      <h2 id="joinHeading">Enter the live classroom</h2>
+      <p id="joinSubheading">Start a session or join your instructor. No camera required.</p>
     </div>
 
     <div id="modeTabs" class="mode-tabs">
@@ -31,7 +74,7 @@
 
     <section id="hostPanel" class="join-panel active">
       <div id="hostStep1">
-        <h3>Start your meeting</h3>
+        <h3>Start a Learn With Champak session</h3>
         <p>Press once. We will try to enable your microphone and create a private invite link.</p>
         <button id="startHostBtn" class="big">Start Meeting</button>
       </div>
@@ -87,6 +130,13 @@
   </section>
 
   <section id="meeting" class="meeting hidden">
+    <section class="meeting-brandbar">
+      <div>
+        <strong>Learn With Champak</strong>
+        <span>Python • DSA • AI/ML • C# • Project Guidance</span>
+      </div>
+      <a href="https://www.learnwithchampak.live/#onlinewithchampak" target="_blank" rel="noopener">Explore Classes</a>
+    </section>
     <section class="screen-stage">
       <video id="remoteVideo" autoplay playsinline></video>
       <div id="remoteEmpty" class="screen-empty">
@@ -182,16 +232,39 @@
     </section>
   </section>
 
-  <section class="panel info">
-    <h2>What this version does</h2>
-    <div class="feature-grid">
-      <div><strong>Invite link</strong><span>Host sends one clickable link instead of a long invite code.</span></div>
-      <div><strong>Sound</strong><span>Microphone audio without requiring a camera.</span></div>
-      <div><strong>Screen + sound</strong><span>Share a tab/window/screen and request available system/tab audio.</span></div>
-      <div><strong>Remote pointer</strong><span>Request permission and point/click on the remote shared-screen preview.</span></div>
-      <div><strong>Browser workspace</strong><span>Open our Python/C# editors and remotely control approved navigation with permission.</span></div>
+  <section class="panel info learning-section">
+    <div class="section-heading">
+      <span class="eyebrow">LEARN BY DOING</span>
+      <h2>More than a meeting link</h2>
+      <p>Learn With Champak brings the class, editor and practice environment together so you can understand a concept and use it immediately.</p>
+    </div>
+    <div class="feature-grid marketing-grid">
+      <a href="https://editor.learnwithchampak.live/python-starter/editor/super/" target="_blank" rel="noopener"><strong>Practice Python</strong><span>Open the Python editor and code along during class.</span></a>
+      <a href="https://dsa.learnwithchampak.live/" target="_blank" rel="noopener"><strong>Master DSA</strong><span>Practice problem solving and strengthen interview fundamentals.</span></a>
+      <a href="https://aiml.learnwithchampak.live/" target="_blank" rel="noopener"><strong>Explore AI / ML</strong><span>Move from core concepts to hands-on machine learning work.</span></a>
+      <a href="https://editor.learnwithchampak.live/c-sharp/" target="_blank" rel="noopener"><strong>Build with C#</strong><span>Use the browser-based C# editor for guided coding practice.</span></a>
+    </div>
+    <div class="brand-cta-band">
+      <div>
+        <strong>Ready for a structured learning session?</strong>
+        <span>Explore Learn With Champak classes, coding practice and project guidance.</span>
+      </div>
+      <a class="cta primary-cta" href="https://www.learnwithchampak.live/#onlinewithchampak" target="_blank" rel="noopener">Learn With Champak</a>
     </div>
   </section>
+
+  <footer class="site-footer">
+    <div>
+      <strong>Learn With Champak</strong>
+      <span>Learn • Code • Build</span>
+    </div>
+    <nav>
+      <a href="https://www.learnwithchampak.live/" target="_blank" rel="noopener">Home</a>
+      <a href="https://dsa.learnwithchampak.live/" target="_blank" rel="noopener">DSA</a>
+      <a href="https://aiml.learnwithchampak.live/" target="_blank" rel="noopener">AI / ML</a>
+      <a href="https://editor.learnwithchampak.live/python-starter/editor/super/" target="_blank" rel="noopener">Python Editor</a>
+    </nav>
+  </footer>
 </main>
 
 <script src="app.js"></script>
