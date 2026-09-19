@@ -2,97 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0b57d0">
-  <meta name="description" content="Learn With Champak Meet - a lightweight peer-to-peer WebRTC classroom meeting app.">
+  <meta name="description" content="Learn With Champak Meet - audio-first peer-to-peer teaching, screen sharing and remote pointer.">
   <title>Learn With Champak Meet</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <h1>Learn With Champak Meet</h1>
-      <p>GitHub-hosted peer-to-peer classroom</p>
+<header class="topbar">
+  <div>
+    <h1>Learn With Champak Meet</h1>
+    <p>Audio • Screen sharing • Remote pointer</p>
+  </div>
+  <span id="status" class="status">Ready</span>
+</header>
+
+<main class="wrap">
+  <section id="joinCard" class="join-card">
+    <div class="join-heading">
+      <h2>Join a meeting</h2>
+      <p>No camera required. Microphone permission is optional.</p>
     </div>
-    <span id="status" class="status">Not connected</span>
-  </header>
 
-  <main class="wrap">
-    <section class="videos">
-      <article class="video-card remote">
-        <video id="remoteVideo" autoplay playsinline></video>
-        <div id="remotePlaceholder" class="placeholder">Waiting for the other participant…</div>
-        <span class="label">Remote participant</span>
-      </article>
+    <div class="mode-tabs">
+      <button id="hostTab" class="tab active">Start a Meeting</button>
+      <button id="guestTab" class="tab secondary">Join a Meeting</button>
+    </div>
 
-      <article class="video-card local">
-        <video id="localVideo" autoplay muted playsinline></video>
-        <div id="localPlaceholder" class="placeholder">Press Start Camera</div>
-        <span class="label">You</span>
-      </article>
+    <section id="hostPanel" class="join-panel active">
+      <div id="hostStep1">
+        <h3>Start your meeting</h3>
+        <p>Press once. We will try to enable your microphone and generate an invite code.</p>
+        <button id="startHostBtn" class="big">Start Meeting</button>
+      </div>
+
+      <div id="hostStep2" class="hidden">
+        <div class="step">1</div>
+        <h3>Send this invite code</h3>
+        <textarea id="inviteCode" readonly></textarea>
+        <button id="copyInviteBtn">Copy Invite Code</button>
+
+        <div class="step">2</div>
+        <h3>Paste the reply code</h3>
+        <textarea id="replyInput" placeholder="Paste the reply code received from the other person"></textarea>
+        <button id="finishHostBtn">Connect</button>
+      </div>
     </section>
 
-    <nav class="controls" aria-label="Meeting controls">
-      <button id="startBtn">Start Camera</button>
-      <button id="muteBtn" disabled>Mute</button>
-      <button id="cameraBtn" disabled>Camera Off</button>
-      <button id="shareBtn" disabled>Share Screen</button>
-      <button id="hangupBtn" class="danger" disabled>Hang Up</button>
+    <section id="guestPanel" class="join-panel">
+      <div class="step">1</div>
+      <h3>Paste the invite code</h3>
+      <textarea id="guestInviteInput" placeholder="Paste the invite code"></textarea>
+      <button id="joinBtn" class="big">Join Meeting</button>
+
+      <div id="guestReplyBox" class="hidden">
+        <div class="step">2</div>
+        <h3>Send this reply code back</h3>
+        <textarea id="guestReplyCode" readonly></textarea>
+        <button id="copyReplyBtn">Copy Reply Code</button>
+        <p class="small-note">Keep this page open. The meeting connects when the host pastes your reply.</p>
+      </div>
+    </section>
+  </section>
+
+  <section id="meeting" class="meeting hidden">
+    <section class="screen-stage">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div id="remoteEmpty" class="screen-empty">
+        <div class="sound-icon">♪</div>
+        <strong>Audio connected</strong>
+        <span>The shared screen will appear here.</span>
+      </div>
+      <div id="remoteControlBadge" class="control-badge hidden">Remote pointer enabled</div>
+    </section>
+
+    <nav class="controls">
+      <button id="micBtn">Mute</button>
+      <button id="shareBtn">Share Screen + Sound</button>
+      <button id="playSoundBtn" class="secondary">Play Sound</button>
+      <button id="requestControlBtn" class="secondary" disabled>Request Remote Pointer</button>
+      <button id="hangupBtn" class="danger">Hang Up</button>
     </nav>
 
-    <section class="connect-grid">
-      <article class="panel">
-        <h2>Teacher / Caller</h2>
-        <p>Create an offer and send it to the student. Then paste the student's answer.</p>
-        <button id="offerBtn" disabled>Create Meeting Offer</button>
+    <section id="controlRequest" class="control-request hidden">
+      <strong>The other participant wants to point on your shared screen.</strong>
+      <span>This does not give access to your computer.</span>
+      <div>
+        <button id="allowControlBtn">Allow Pointer</button>
+        <button id="denyControlBtn" class="secondary">Deny</button>
+      </div>
+    </section>
 
-        <label for="offerOut">Meeting offer</label>
-        <textarea id="offerOut" readonly placeholder="Offer appears here"></textarea>
-        <button id="copyOfferBtn" disabled>Copy Offer</button>
-
-        <label for="answerIn">Student answer</label>
-        <textarea id="answerIn" placeholder="Paste the student's answer"></textarea>
-        <button id="applyAnswerBtn" disabled>Connect Using Answer</button>
-      </article>
-
-      <article class="panel">
-        <h2>Student / Receiver</h2>
-        <p>Paste the teacher's offer, create an answer, and send the answer back.</p>
-
-        <label for="offerIn">Teacher offer</label>
-        <textarea id="offerIn" placeholder="Paste the teacher's offer"></textarea>
-        <button id="answerBtn" disabled>Create Answer</button>
-
-        <label for="answerOut">Your answer</label>
-        <textarea id="answerOut" readonly placeholder="Answer appears here"></textarea>
-        <button id="copyAnswerBtn" disabled>Copy Answer</button>
-      </article>
+    <section id="localShareBox" class="local-share hidden">
+      <h3>Your shared screen</h3>
+      <div class="preview-wrap">
+        <video id="localShareVideo" autoplay muted playsinline></video>
+        <div id="remotePointer" class="remote-pointer hidden"></div>
+      </div>
+      <p>Remote pointer appears here when you allow it. Browser security prevents a web page from moving your real mouse or typing into other desktop applications.</p>
     </section>
 
     <section class="panel">
-      <h2>Class Chat</h2>
-      <div id="messages" class="messages">
-        <p class="system">Chat becomes active after the peer connection opens.</p>
-      </div>
+      <h2>Chat</h2>
+      <div id="messages" class="messages"><p class="system">Waiting for the peer-to-peer data channel…</p></div>
       <div class="chat-row">
         <input id="chatInput" autocomplete="off" placeholder="Type a message…" disabled>
         <button id="sendBtn" disabled>Send</button>
       </div>
     </section>
+  </section>
 
-    <section class="panel instructions">
-      <h2>How to join</h2>
-      <ol>
-        <li>Both people press <strong>Start Camera</strong>.</li>
-        <li>The teacher creates and sends the meeting offer.</li>
-        <li>The student pastes the offer and creates an answer.</li>
-        <li>The student sends the answer back.</li>
-        <li>The teacher pastes it and presses <strong>Connect Using Answer</strong>.</li>
-      </ol>
-      <p class="note">No application server stores or relays the meeting. This prototype uses a public STUN service to help the browsers establish a direct WebRTC connection. Some restrictive networks may still require a TURN server.</p>
-    </section>
-  </main>
+  <section class="panel info">
+    <h2>What this version does</h2>
+    <div class="feature-grid">
+      <div><strong>Sound</strong><span>Microphone audio without requiring a camera.</span></div>
+      <div><strong>Screen + sound</strong><span>Share a tab/window/screen and request available system/tab audio.</span></div>
+      <div><strong>Remote pointer</strong><span>Request permission and point/click on the remote shared-screen preview.</span></div>
+      <div><strong>Private P2P</strong><span>No application server stores the meeting.</span></div>
+    </div>
+  </section>
+</main>
 
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
