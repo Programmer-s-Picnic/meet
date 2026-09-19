@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b57d0">
+  <meta name="description" content="Learn With Champak Meet - a lightweight peer-to-peer WebRTC classroom meeting app.">
+  <title>Learn With Champak Meet</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Learn With Champak Meet</h1>
+      <p>GitHub-hosted peer-to-peer classroom</p>
+    </div>
+    <span id="status" class="status">Not connected</span>
+  </header>
+
+  <main class="wrap">
+    <section class="videos">
+      <article class="video-card remote">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div id="remotePlaceholder" class="placeholder">Waiting for the other participant…</div>
+        <span class="label">Remote participant</span>
+      </article>
+
+      <article class="video-card local">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div id="localPlaceholder" class="placeholder">Press Start Camera</div>
+        <span class="label">You</span>
+      </article>
+    </section>
+
+    <nav class="controls" aria-label="Meeting controls">
+      <button id="startBtn">Start Camera</button>
+      <button id="muteBtn" disabled>Mute</button>
+      <button id="cameraBtn" disabled>Camera Off</button>
+      <button id="shareBtn" disabled>Share Screen</button>
+      <button id="hangupBtn" class="danger" disabled>Hang Up</button>
+    </nav>
+
+    <section class="connect-grid">
+      <article class="panel">
+        <h2>Teacher / Caller</h2>
+        <p>Create an offer and send it to the student. Then paste the student's answer.</p>
+        <button id="offerBtn" disabled>Create Meeting Offer</button>
+
+        <label for="offerOut">Meeting offer</label>
+        <textarea id="offerOut" readonly placeholder="Offer appears here"></textarea>
+        <button id="copyOfferBtn" disabled>Copy Offer</button>
+
+        <label for="answerIn">Student answer</label>
+        <textarea id="answerIn" placeholder="Paste the student's answer"></textarea>
+        <button id="applyAnswerBtn" disabled>Connect Using Answer</button>
+      </article>
+
+      <article class="panel">
+        <h2>Student / Receiver</h2>
+        <p>Paste the teacher's offer, create an answer, and send the answer back.</p>
+
+        <label for="offerIn">Teacher offer</label>
+        <textarea id="offerIn" placeholder="Paste the teacher's offer"></textarea>
+        <button id="answerBtn" disabled>Create Answer</button>
+
+        <label for="answerOut">Your answer</label>
+        <textarea id="answerOut" readonly placeholder="Answer appears here"></textarea>
+        <button id="copyAnswerBtn" disabled>Copy Answer</button>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Class Chat</h2>
+      <div id="messages" class="messages">
+        <p class="system">Chat becomes active after the peer connection opens.</p>
+      </div>
+      <div class="chat-row">
+        <input id="chatInput" autocomplete="off" placeholder="Type a message…" disabled>
+        <button id="sendBtn" disabled>Send</button>
+      </div>
+    </section>
+
+    <section class="panel instructions">
+      <h2>How to join</h2>
+      <ol>
+        <li>Both people press <strong>Start Camera</strong>.</li>
+        <li>The teacher creates and sends the meeting offer.</li>
+        <li>The student pastes the offer and creates an answer.</li>
+        <li>The student sends the answer back.</li>
+        <li>The teacher pastes it and presses <strong>Connect Using Answer</strong>.</li>
+      </ol>
+      <p class="note">No application server stores or relays the meeting. This prototype uses a public STUN service to help the browsers establish a direct WebRTC connection. Some restrictive networks may still require a TURN server.</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
