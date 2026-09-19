@@ -55,3 +55,14 @@ The app uses `stun:stun.l.google.com:19302` for WebRTC peer discovery. Some rest
 ## WhatsApp behavior
 
 The website uses WhatsApp's share URL with a pre-filled message. A normal web page cannot silently send a WhatsApp message on the user's behalf: WhatsApp still requires the user to choose a recipient (or chat) and press Send. This keeps sending under the user's control.
+
+
+## Browser workspace and editor links
+
+The meeting now includes a Browser Workspace with shortcuts to the Python Editor, C# Editor, DSA site, and AI/ML site.
+
+Either participant can press Request Browser Control. The other participant must explicitly allow it. Once allowed, the requester can target the remote workspace and send approved navigation commands: Open, Back, Forward, Reload, and New Tab.
+
+The workspace accepts only approved HTTPS pages under Learn With Champak and Programmer's Picnic.
+
+Because the editors are on a different web origin from the GitHub Pages meeting app, browser security prevents the Meet page from directly injecting clicks or keystrokes inside those editor documents. Full remote editing inside the existing editors needs a small window.postMessage control bridge added to the editor pages themselves.
