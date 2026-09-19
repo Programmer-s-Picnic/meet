@@ -5,13 +5,17 @@ const joinHeading=$("joinHeading"),joinSubheading=$("joinSubheading");
 const startHostBtn=$("startHostBtn"),hostStep1=$("hostStep1"),hostStep2=$("hostStep2"),inviteLink=$("inviteLink"),copyInviteBtn=$("copyInviteBtn"),shareInviteBtn=$("shareInviteBtn"),whatsappInviteBtn=$("whatsappInviteBtn"),replyInput=$("replyInput"),finishHostBtn=$("finishHostBtn");
 const guestInviteInput=$("guestInviteInput"),guestManualBox=$("guestManualBox"),linkedInviteBox=$("linkedInviteBox"),joinBtn=$("joinBtn"),guestReplyBox=$("guestReplyBox"),guestReplyCode=$("guestReplyCode"),copyReplyBtn=$("copyReplyBtn"),whatsappReplyBtn=$("whatsappReplyBtn");
 const remoteVideo=$("remoteVideo"),remoteEmpty=$("remoteEmpty"),localShareBox=$("localShareBox"),localShareVideo=$("localShareVideo");
-const micBtn=$("micBtn"),shareBtn=$("shareBtn"),playSoundBtn=$("playSoundBtn"),requestControlBtn=$("requestControlBtn"),hangupBtn=$("hangupBtn");
+const micBtn=$("micBtn"),shareBtn=$("shareBtn"),playSoundBtn=$("playSoundBtn"),requestControlBtn=$("requestControlBtn"),requestBrowserControlBtn=$("requestBrowserControlBtn"),hangupBtn=$("hangupBtn");
 const controlRequest=$("controlRequest"),allowControlBtn=$("allowControlBtn"),denyControlBtn=$("denyControlBtn"),remotePointer=$("remotePointer"),remoteControlBadge=$("remoteControlBadge");
+const browserControlRequest=$("browserControlRequest"),allowBrowserControlBtn=$("allowBrowserControlBtn"),denyBrowserControlBtn=$("denyBrowserControlBtn"),browserControlState=$("browserControlState");
+const workspaceFrame=$("workspaceFrame"),workspaceUrl=$("workspaceUrl"),workspaceTarget=$("workspaceTarget"),workspaceGoBtn=$("workspaceGoBtn"),workspaceNewTabBtn=$("workspaceNewTabBtn"),workspaceBackBtn=$("workspaceBackBtn"),workspaceForwardBtn=$("workspaceForwardBtn"),workspaceReloadBtn=$("workspaceReloadBtn");
 const messages=$("messages"),chatInput=$("chatInput"),sendBtn=$("sendBtn");
 
 let pc=null,micStream=null,micTrack=null,screenStream=null,remoteStream=null,dataChannel=null;
 let screenVideoSender=null,screenAudioSender=null,primaryAudioSender=null;
 let micEnabled=true,canSendPointer=false,allowPointer=false,isHost=false;
+let canControlRemoteBrowser=false,allowRemoteBrowserControl=false;
+let workspaceHistory=["https://editor.learnwithchampak.live/python-starter/editor/super/"],workspaceIndex=0;
 let inviteFromLink="";
 
 const rtcConfig={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
@@ -106,10 +110,10 @@ function refreshConnection(){
 function bindDataChannel(){
   if(!dataChannel)return;
   dataChannel.onopen=()=>{
-    chatInput.disabled=false;sendBtn.disabled=false;
+    chatInput.disabled=false;sendBtn.disabled=false;requestBrowserControlBtn.disabled=false;
     systemMessage("Private chat/control channel connected.");
   };
-  dataChannel.onclose=()=>{chatInput.disabled=true;sendBtn.disabled=true;canSendPointer=false;requestControlBtn.disabled=true};
+  dataChannel.onclose=()=>{chatInput.disabled=true;sendBtn.disabled=true;canSendPointer=false;requestControlBtn.disabled=true;requestBrowserControlBtn.disabled=true;canControlRemoteBrowser=false;workspaceTarget.options[1].disabled=true};
   dataChannel.onmessage=e=>{
     let packet;
     try{packet=JSON.parse(e.data)}catch{packet={type:"chat",text:e.data}}
@@ -122,6 +126,33 @@ function bindDataChannel(){
     if(packet.type==="control-denied"){canSendPointer=false;requestControlBtn.textContent="Request Remote Pointer";systemMessage("Remote pointer request was declined.")}
     if(packet.type==="control-revoked"){canSendPointer=false;requestControlBtn.textContent="Request Remote Pointer";remoteControlBadge.classList.add("hidden");systemMessage("Remote pointer permission ended.")}
     if(packet.type==="pointer"&&allowPointer)showRemotePointer(packet);
+    if(packet.type==="browser-control-request")browserControlRequest.classList.remove("hidden");
+    if(packet.type==="browser-control-granted"){
+      canControlRemoteBrowser=true;
+      workspaceTarget.options[1].disabled=false;
+      workspaceTarget.value="remote";
+      requestBrowserControlBtn.textContent="Browser Control Granted";
+      browserControlState.textContent="Remote control available";
+      browserControlState.className="workspace-state allowed";
+      systemMessage("Remote browser workspace control granted.");
+    }
+    if(packet.type==="browser-control-denied"){
+      canControlRemoteBrowser=false;
+      workspaceTarget.options[1].disabled=true;
+      workspaceTarget.value="local";
+      requestBrowserControlBtn.textContent="Request Browser Control";
+      systemMessage("Browser control request was declined.");
+    }
+    if(packet.type==="browser-control-revoked"){
+      canControlRemoteBrowser=false;
+      workspaceTarget.options[1].disabled=true;
+      workspaceTarget.value="local";
+      requestBrowserControlBtn.textContent="Request Browser Control";
+      browserControlState.textContent="Local control";
+      browserControlState.className="workspace-state";
+      systemMessage("Remote browser control ended.");
+    }
+    if(packet.type==="browser-command"&&allowRemoteBrowserControl)applyBrowserCommand(packet.command);
   };
 }
 
@@ -252,6 +283,106 @@ function sendReplyOnWhatsApp(){
   openWhatsApp(message);
 }
 
+
+const APPROVED_HOSTS=[
+  "editor.learnwithchampak.live",
+  "learnwithchampak.live",
+  "dsa.learnwithchampak.live",
+  "aiml.learnwithchampak.live",
+  "angular.learnwithchampak.live",
+  "react.learnwithchampak.live",
+  "search.learnwithchampak.live",
+  "programmer-s-picnic.github.io"
+];
+
+function normalizeWorkspaceUrl(raw){
+  let value=(raw||"").trim();
+  if(!value)return null;
+  if(!/^https?:\/\//i.test(value))value="https://"+value;
+  try{
+    const u=new URL(value);
+    if(u.protocol!=="https:")return null;
+    const host=u.hostname.toLowerCase();
+    const ok=APPROVED_HOSTS.includes(host)||host.endsWith(".learnwithchampak.live");
+    return ok?u.href:null;
+  }catch{return null}
+}
+
+function setWorkspaceUrl(url,push=true){
+  const safe=normalizeWorkspaceUrl(url);
+  if(!safe){
+    alert("Only approved Learn With Champak / Programmer's Picnic HTTPS pages can open in this workspace.");
+    return;
+  }
+  workspaceUrl.value=safe;
+  workspaceFrame.src=safe;
+  if(push){
+    workspaceHistory=workspaceHistory.slice(0,workspaceIndex+1);
+    workspaceHistory.push(safe);
+    workspaceIndex=workspaceHistory.length-1;
+  }
+}
+
+function sendOrApplyBrowserCommand(command){
+  if(workspaceTarget.value==="remote"){
+    if(!canControlRemoteBrowser)return alert("Request browser control first.");
+    sendPacket({type:"browser-command",command});
+  }else{
+    applyBrowserCommand(command);
+  }
+}
+
+function applyBrowserCommand(command){
+  if(!command||typeof command!=="object")return;
+  if(command.action==="open")setWorkspaceUrl(command.url,true);
+  if(command.action==="reload")workspaceFrame.src=workspaceFrame.src;
+  if(command.action==="back"&&workspaceIndex>0){
+    workspaceIndex--;
+    workspaceUrl.value=workspaceHistory[workspaceIndex];
+    workspaceFrame.src=workspaceHistory[workspaceIndex];
+  }
+  if(command.action==="forward"&&workspaceIndex<workspaceHistory.length-1){
+    workspaceIndex++;
+    workspaceUrl.value=workspaceHistory[workspaceIndex];
+    workspaceFrame.src=workspaceHistory[workspaceIndex];
+  }
+  if(command.action==="newtab"){
+    const safe=normalizeWorkspaceUrl(command.url||workspaceUrl.value);
+    if(safe)window.open(safe,"_blank","noopener,noreferrer");
+  }
+}
+
+function requestBrowserControl(){
+  if(dataChannel?.readyState!=="open")return alert("The control channel is not connected yet.");
+  sendPacket({type:"browser-control-request"});
+  requestBrowserControlBtn.textContent="Browser Control Requested…";
+}
+
+allowBrowserControlBtn.onclick=()=>{
+  allowRemoteBrowserControl=true;
+  browserControlRequest.classList.add("hidden");
+  browserControlState.textContent="Peer may control workspace";
+  browserControlState.className="workspace-state remote";
+  sendPacket({type:"browser-control-granted"});
+  systemMessage("Remote participant may now control approved browser-workspace navigation.");
+};
+
+denyBrowserControlBtn.onclick=()=>{
+  allowRemoteBrowserControl=false;
+  browserControlRequest.classList.add("hidden");
+  sendPacket({type:"browser-control-denied"});
+};
+
+workspaceGoBtn.onclick=()=>sendOrApplyBrowserCommand({action:"open",url:workspaceUrl.value});
+workspaceNewTabBtn.onclick=()=>sendOrApplyBrowserCommand({action:"newtab",url:workspaceUrl.value});
+workspaceBackBtn.onclick=()=>sendOrApplyBrowserCommand({action:"back"});
+workspaceForwardBtn.onclick=()=>sendOrApplyBrowserCommand({action:"forward"});
+workspaceReloadBtn.onclick=()=>sendOrApplyBrowserCommand({action:"reload"});
+workspaceUrl.addEventListener("keydown",e=>{if(e.key==="Enter")sendOrApplyBrowserCommand({action:"open",url:workspaceUrl.value})});
+document.querySelectorAll(".editorShortcut").forEach(btn=>{
+  btn.addEventListener("click",()=>sendOrApplyBrowserCommand({action:"open",url:btn.dataset.url}));
+});
+
 function toggleMic(){
   if(!micTrack)return;
   micEnabled=!micEnabled;micTrack.enabled=micEnabled;micBtn.textContent=micEnabled?"Mute":"Unmute";
@@ -320,6 +451,7 @@ async function playRemoteSound(){
 }
 
 function hangUp(){
+  if(allowRemoteBrowserControl)sendPacket({type:"browser-control-revoked"});
   try{dataChannel?.close()}catch{} try{pc?.close()}catch{}
   micStream?.getTracks().forEach(t=>t.stop());screenStream?.getTracks().forEach(t=>t.stop());
   location.href=location.href.split("#")[0];
@@ -337,6 +469,7 @@ micBtn.onclick=toggleMic;
 shareBtn.onclick=shareScreen;
 playSoundBtn.onclick=playRemoteSound;
 requestControlBtn.onclick=requestPointer;
+requestBrowserControlBtn.onclick=requestBrowserControl;
 hangupBtn.onclick=hangUp;
 sendBtn.onclick=sendChat;
 chatInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
