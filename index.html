@@ -20,11 +20,11 @@
 <main class="wrap">
   <section id="joinCard" class="join-card">
     <div class="join-heading">
-      <h2>Join a meeting</h2>
-      <p>No camera required. Microphone permission is optional.</p>
+      <h2 id="joinHeading">Join a meeting</h2>
+      <p id="joinSubheading">No camera required. Microphone permission is optional.</p>
     </div>
 
-    <div class="mode-tabs">
+    <div id="modeTabs" class="mode-tabs">
       <button id="hostTab" class="tab active">Start a Meeting</button>
       <button id="guestTab" class="tab secondary">Join a Meeting</button>
     </div>
@@ -32,15 +32,19 @@
     <section id="hostPanel" class="join-panel active">
       <div id="hostStep1">
         <h3>Start your meeting</h3>
-        <p>Press once. We will try to enable your microphone and generate an invite code.</p>
+        <p>Press once. We will try to enable your microphone and create a private invite link.</p>
         <button id="startHostBtn" class="big">Start Meeting</button>
       </div>
 
       <div id="hostStep2" class="hidden">
         <div class="step">1</div>
-        <h3>Send this invite code</h3>
-        <textarea id="inviteCode" readonly></textarea>
-        <button id="copyInviteBtn">Copy Invite Code</button>
+        <h3>Send this invite link</h3>
+        <p class="small-note">Keep this tab open while the other person joins.</p>
+        <textarea id="inviteLink" readonly></textarea>
+        <div class="action-row">
+          <button id="copyInviteBtn">Copy Invite Link</button>
+          <button id="shareInviteBtn" class="secondary">Share Invite</button>
+        </div>
 
         <div class="step">2</div>
         <h3>Paste the reply code</h3>
@@ -50,14 +54,27 @@
     </section>
 
     <section id="guestPanel" class="join-panel">
-      <div class="step">1</div>
-      <h3>Paste the invite code</h3>
-      <textarea id="guestInviteInput" placeholder="Paste the invite code"></textarea>
+      <div id="guestManualBox">
+        <div class="step">1</div>
+        <h3>Open an invite link</h3>
+        <p>If someone sent you a Learn With Champak Meet link, open it directly. Manual paste is kept only as a fallback.</p>
+        <details>
+          <summary>Manual invite fallback</summary>
+          <textarea id="guestInviteInput" placeholder="Paste invite data"></textarea>
+        </details>
+      </div>
+
+      <div id="linkedInviteBox" class="linked-invite hidden">
+        <div class="step">1</div>
+        <h3>Meeting invitation received</h3>
+        <p>Press below to join. No camera will be requested.</p>
+      </div>
+
       <button id="joinBtn" class="big">Join Meeting</button>
 
       <div id="guestReplyBox" class="hidden">
         <div class="step">2</div>
-        <h3>Send this reply code back</h3>
+        <h3>Send this reply code back to the host</h3>
         <textarea id="guestReplyCode" readonly></textarea>
         <button id="copyReplyBtn">Copy Reply Code</button>
         <p class="small-note">Keep this page open. The meeting connects when the host pastes your reply.</p>
@@ -115,10 +132,10 @@
   <section class="panel info">
     <h2>What this version does</h2>
     <div class="feature-grid">
+      <div><strong>Invite link</strong><span>Host sends one clickable link instead of a long invite code.</span></div>
       <div><strong>Sound</strong><span>Microphone audio without requiring a camera.</span></div>
       <div><strong>Screen + sound</strong><span>Share a tab/window/screen and request available system/tab audio.</span></div>
       <div><strong>Remote pointer</strong><span>Request permission and point/click on the remote shared-screen preview.</span></div>
-      <div><strong>Private P2P</strong><span>No application server stores the meeting.</span></div>
     </div>
   </section>
 </main>
