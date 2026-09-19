@@ -1,39 +1,59 @@
 # Learn With Champak Meet
 
-A lightweight **1-to-1 WebRTC meeting app** designed for Learn With Champak and hosted as a static GitHub Pages site.
+A static, GitHub Pages-ready **audio-first 1-to-1 WebRTC meeting app**.
 
-## Features
+## Current design
 
-- Camera and microphone
-- Mute/unmute
-- Camera on/off
+Camera has been removed from the joining flow. A meeting can be created or joined with microphone audio only, and it still continues if microphone permission is denied.
+
+### Features
+
+- Microphone sound, with mute/unmute
+- Receive remote sound
 - Screen sharing
-- Peer-to-peer audio/video
-- Peer-to-peer text chat
-- Responsive mobile/desktop interface
+- Requests available tab/system audio while screen sharing
+- Text chat over a WebRTC data channel
+- Simple Host / Join wizard
+- Permission-based remote pointer on the shared-screen preview
 - No application backend
-- Manual WebRTC offer/answer exchange
+- GitHub Pages compatible
 
-## How to use
+## Joining
 
-1. Both teacher and student open the site and press **Start Camera**.
-2. The teacher presses **Create Meeting Offer** and sends the generated text to the student.
-3. The student pastes the offer and presses **Create Answer**.
-4. The student sends the answer back to the teacher.
-5. The teacher pastes the answer and presses **Connect Using Answer**.
+### Host
 
-## GitHub Pages
+1. Select **Start a Meeting**.
+2. Press **Start Meeting**.
+3. Send the generated invite code.
+4. Receive the reply code.
+5. Paste the reply and press **Connect**.
 
-The app consists only of static HTML, CSS, and JavaScript, so it can be served directly from GitHub Pages.
+### Guest
 
-## Networking note
+1. Select **Join a Meeting**.
+2. Paste the invite code.
+3. Press **Join Meeting**.
+4. Send the generated reply code back to the host.
+5. Keep the page open until connected.
 
-The page uses the public STUN endpoint `stun:stun.l.google.com:19302` to assist WebRTC peer discovery. Audio/video is intended to travel directly between the two browsers. Some restrictive networks cannot establish a direct connection and would require a TURN relay server.
+The small two-way code exchange is still required because GitHub Pages cannot run a rendezvous/signalling server.
 
-## Next upgrades
+## Screen sound
 
-- QR-based offer/answer exchange
-- Compact meeting codes
-- Participant names
-- Better classroom layout
-- Optional signalling service for one-click joining
+The app calls `getDisplayMedia({ video: true, audio: true })` and requests available system/tab audio. Whether system sound is actually supplied depends on the browser, operating system, and the share source selected by the user. In Chrome, sharing a browser tab is commonly the most reliable way to include tab audio.
+
+## Remote control limitation
+
+A normal web page is not permitted to inject trusted mouse or keyboard input into another application or the operating system. Therefore a pure GitHub Pages site cannot provide Zoom-style full desktop remote control.
+
+This version implements an explicit request/allow **remote pointer** channel. The remote participant can point and click on the shared-screen preview so the sharer can see exactly where they are referring to.
+
+True mouse/keyboard control of the desktop would require a separately installed desktop helper/native application. That helper can still use this WebRTC data channel for control messages.
+
+## Networking
+
+The app uses:
+
+`stun:stun.l.google.com:19302`
+
+STUN assists peer discovery; it does not host the page or store the meeting. Some restrictive networks still require a TURN relay server.
