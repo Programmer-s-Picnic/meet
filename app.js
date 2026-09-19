@@ -5,11 +5,12 @@ const joinHeading=$("joinHeading"),joinSubheading=$("joinSubheading");
 const startHostBtn=$("startHostBtn"),hostStep1=$("hostStep1"),hostStep2=$("hostStep2"),inviteLink=$("inviteLink"),copyInviteBtn=$("copyInviteBtn"),shareInviteBtn=$("shareInviteBtn"),whatsappInviteBtn=$("whatsappInviteBtn"),replyInput=$("replyInput"),finishHostBtn=$("finishHostBtn");
 const guestInviteInput=$("guestInviteInput"),guestManualBox=$("guestManualBox"),linkedInviteBox=$("linkedInviteBox"),joinBtn=$("joinBtn"),guestReplyBox=$("guestReplyBox"),guestReplyCode=$("guestReplyCode"),copyReplyBtn=$("copyReplyBtn"),whatsappReplyBtn=$("whatsappReplyBtn");
 const remoteVideo=$("remoteVideo"),remoteEmpty=$("remoteEmpty"),localShareBox=$("localShareBox"),localShareVideo=$("localShareVideo");
-const micBtn=$("micBtn"),shareBtn=$("shareBtn"),playSoundBtn=$("playSoundBtn"),requestControlBtn=$("requestControlBtn"),requestBrowserControlBtn=$("requestBrowserControlBtn"),hangupBtn=$("hangupBtn");
+const micBtn=$("micBtn"),shareBtn=$("shareBtn"),playSoundBtn=$("playSoundBtn"),requestControlBtn=$("requestControlBtn"),requestBrowserControlBtn=$("requestBrowserControlBtn"),ludoToggleBtn=$("ludoToggleBtn"),hangupBtn=$("hangupBtn");
 const controlRequest=$("controlRequest"),allowControlBtn=$("allowControlBtn"),denyControlBtn=$("denyControlBtn"),remotePointer=$("remotePointer"),remoteControlBadge=$("remoteControlBadge");
 const browserControlRequest=$("browserControlRequest"),allowBrowserControlBtn=$("allowBrowserControlBtn"),denyBrowserControlBtn=$("denyBrowserControlBtn"),browserControlState=$("browserControlState");
 const workspaceFrame=$("workspaceFrame"),workspaceUrl=$("workspaceUrl"),workspaceTarget=$("workspaceTarget"),workspaceGoBtn=$("workspaceGoBtn"),workspaceNewTabBtn=$("workspaceNewTabBtn"),workspaceBackBtn=$("workspaceBackBtn"),workspaceForwardBtn=$("workspaceForwardBtn"),workspaceReloadBtn=$("workspaceReloadBtn");
 const messages=$("messages"),chatInput=$("chatInput"),sendBtn=$("sendBtn");
+const ludoPanel=$("ludoPanel"),ludoCloseBtn=$("ludoCloseBtn"),ludoBoard=$("ludoBoard"),ludoTurn=$("ludoTurn"),ludoStatus=$("ludoStatus"),ludoDice=$("ludoDice"),ludoRollBtn=$("ludoRollBtn"),ludoNewBtn=$("ludoNewBtn"),ludoRedCard=$("ludoRedCard"),ludoBlueCard=$("ludoBlueCard");
 
 let pc=null,micStream=null,micTrack=null,screenStream=null,remoteStream=null,dataChannel=null;
 let screenVideoSender=null,screenAudioSender=null,primaryAudioSender=null;
@@ -17,6 +18,39 @@ let micEnabled=true,canSendPointer=false,allowPointer=false,isHost=false;
 let canControlRemoteBrowser=false,allowRemoteBrowserControl=false;
 let workspaceHistory=["https://editor.learnwithchampak.live/python-starter/editor/super/"],workspaceIndex=0;
 let inviteFromLink="";
+
+const LUDO_TRACK=[
+  [6,1],[6,2],[6,3],[6,4],[6,5],
+  [5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],
+  [1,8],[2,8],[3,8],[4,8],[5,8],
+  [6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],
+  [8,13],[8,12],[8,11],[8,10],[8,9],
+  [9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],
+  [13,6],[12,6],[11,6],[10,6],[9,6],
+  [8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]
+];
+const LUDO_HOME={
+  red:[[7,1],[7,2],[7,3],[7,4],[7,5],[7,6]],
+  blue:[[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]]
+};
+const LUDO_YARD={
+  red:[[2,2],[2,4],[4,2],[4,4]],
+  blue:[[10,10],[10,12],[12,10],[12,12]]
+};
+const LUDO_START={red:0,blue:26};
+const LUDO_SAFE=new Set([0,8,13,21,26,34,39,47]);
+let ludoState=createLudoState();
+
+function createLudoState(){
+  return {
+    turn:"red",
+    dice:null,
+    awaitingMove:false,
+    winner:null,
+    players:{red:[-1,-1,-1,-1],blue:[-1,-1,-1,-1]},
+    status:"Red rolls first."
+  };
+}
 
 const rtcConfig={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
 
@@ -110,10 +144,11 @@ function refreshConnection(){
 function bindDataChannel(){
   if(!dataChannel)return;
   dataChannel.onopen=()=>{
-    chatInput.disabled=false;sendBtn.disabled=false;requestBrowserControlBtn.disabled=false;
+    chatInput.disabled=false;sendBtn.disabled=false;requestBrowserControlBtn.disabled=false;ludoToggleBtn.disabled=false;
     systemMessage("Private chat/control channel connected.");
+    if(isHost)syncLudoState();else sendPacket({type:"ludo-sync-request"});
   };
-  dataChannel.onclose=()=>{chatInput.disabled=true;sendBtn.disabled=true;canSendPointer=false;requestControlBtn.disabled=true;requestBrowserControlBtn.disabled=true;canControlRemoteBrowser=false;workspaceTarget.options[1].disabled=true};
+  dataChannel.onclose=()=>{chatInput.disabled=true;sendBtn.disabled=true;canSendPointer=false;requestControlBtn.disabled=true;requestBrowserControlBtn.disabled=true;ludoToggleBtn.disabled=true;canControlRemoteBrowser=false;workspaceTarget.options[1].disabled=true};
   dataChannel.onmessage=e=>{
     let packet;
     try{packet=JSON.parse(e.data)}catch{packet={type:"chat",text:e.data}}
@@ -151,6 +186,11 @@ function bindDataChannel(){
       browserControlState.textContent="Local control";
       browserControlState.className="workspace-state";
       systemMessage("Remote browser control ended.");
+    }
+    if(packet.type==="ludo-sync-request"&&isHost)syncLudoState();
+    if(packet.type==="ludo-state"&&validLudoState(packet.state)){
+      ludoState=packet.state;
+      renderLudo();
     }
     if(packet.type==="browser-command"&&allowRemoteBrowserControl)applyBrowserCommand(packet.command);
   };
@@ -283,6 +323,182 @@ function sendReplyOnWhatsApp(){
   openWhatsApp(message);
 }
 
+
+
+function validLudoState(state){
+  return !!state &&
+    (state.turn==="red"||state.turn==="blue") &&
+    state.players &&
+    Array.isArray(state.players.red) &&
+    Array.isArray(state.players.blue) &&
+    state.players.red.length===4 &&
+    state.players.blue.length===4;
+}
+
+function localLudoColor(){
+  return isHost?"red":"blue";
+}
+
+function syncLudoState(){
+  sendPacket({type:"ludo-state",state:ludoState});
+}
+
+function buildLudoBoard(){
+  if(!ludoBoard||ludoBoard.children.length)return;
+  const trackSet=new Set(LUDO_TRACK.map(([r,c])=>r+","+c));
+  const safeCoords=new Set([...LUDO_SAFE].map(i=>LUDO_TRACK[i].join(",")));
+  const redHome=new Set(LUDO_HOME.red.map(x=>x.join(",")));
+  const blueHome=new Set(LUDO_HOME.blue.map(x=>x.join(",")));
+  for(let r=0;r<15;r++){
+    for(let c=0;c<15;c++){
+      const cell=document.createElement("div");
+      const key=r+","+c;
+      cell.id="ludo-cell-"+r+"-"+c;
+      cell.className="ludo-cell";
+      if(trackSet.has(key))cell.classList.add("track");else cell.classList.add("empty");
+      if(safeCoords.has(key))cell.classList.add("safe");
+      if(r>=1&&r<=5&&c>=1&&c<=5)cell.classList.add("red-yard");
+      if(r>=9&&r<=13&&c>=9&&c<=13)cell.classList.add("blue-yard");
+      if(redHome.has(key))cell.classList.add("red-home");
+      if(blueHome.has(key))cell.classList.add("blue-home");
+      if(r===7&&c===7)cell.classList.add("center");
+      if(r===6&&c===1)cell.classList.add("red-start");
+      if(r===8&&c===13)cell.classList.add("blue-start");
+      ludoBoard.appendChild(cell);
+    }
+  }
+}
+
+function ludoTokenCoord(color,progress,index){
+  if(progress===-1)return LUDO_YARD[color][index];
+  if(progress>=0&&progress<=51){
+    return LUDO_TRACK[(LUDO_START[color]+progress)%52];
+  }
+  if(progress>=52&&progress<=57)return LUDO_HOME[color][progress-52];
+  return [7,7];
+}
+
+function ludoCanMove(color,index,dice=ludoState.dice){
+  if(!dice||ludoState.winner||ludoState.turn!==color)return false;
+  const p=ludoState.players[color][index];
+  if(p===58)return false;
+  if(p===-1)return dice===6;
+  return p+dice<=58;
+}
+
+function renderLudo(){
+  buildLudoBoard();
+  ludoBoard.querySelectorAll(".ludo-token").forEach(x=>x.remove());
+
+  for(const color of ["red","blue"]){
+    ludoState.players[color].forEach((progress,index)=>{
+      const [r,c]=ludoTokenCoord(color,progress,index);
+      const cell=$("ludo-cell-"+r+"-"+c);
+      if(!cell)return;
+      const token=document.createElement("button");
+      token.type="button";
+      token.className="ludo-token "+color;
+      token.textContent=String(index+1);
+      token.title=color+" token "+(index+1);
+      const movable=ludoState.awaitingMove && ludoCanMove(color,index) && localLudoColor()===color;
+      token.disabled=!movable;
+      if(movable)token.classList.add("movable");
+      token.addEventListener("click",()=>moveLudoToken(color,index));
+      cell.appendChild(token);
+    });
+  }
+
+  ludoTurn.textContent=ludoState.winner ? (ludoState.winner==="red"?"Red wins!":"Blue wins!") : (ludoState.turn==="red"?"Red":"Blue");
+  ludoStatus.textContent=ludoState.status||"";
+  ludoDice.textContent=ludoState.dice==null?"–":String(ludoState.dice);
+  ludoRedCard.classList.toggle("active",!ludoState.winner&&ludoState.turn==="red");
+  ludoBlueCard.classList.toggle("active",!ludoState.winner&&ludoState.turn==="blue");
+
+  const myTurn=!ludoState.winner && ludoState.turn===localLudoColor();
+  ludoRollBtn.disabled=!(dataChannel?.readyState==="open"&&myTurn&&!ludoState.awaitingMove);
+  ludoRollBtn.textContent=myTurn ? "Roll Dice" : "Wait for "+(ludoState.turn==="red"?"Red":"Blue");
+}
+
+function rollLudoDice(){
+  if(dataChannel?.readyState!=="open"||ludoState.winner)return;
+  const color=localLudoColor();
+  if(ludoState.turn!==color||ludoState.awaitingMove)return;
+
+  const dice=Math.floor(Math.random()*6)+1;
+  ludoState.dice=dice;
+  ludoState.awaitingMove=true;
+
+  const legal=[0,1,2,3].filter(i=>ludoCanMove(color,i,dice));
+  if(!legal.length){
+    ludoState.awaitingMove=false;
+    if(dice===6){
+      ludoState.status=(color==="red"?"Red":"Blue")+" rolled 6 but has no legal move. Roll again.";
+    }else{
+      ludoState.turn=color==="red"?"blue":"red";
+      ludoState.status=(color==="red"?"Red":"Blue")+" rolled "+dice+" with no legal move. "+(ludoState.turn==="red"?"Red":"Blue")+" to roll.";
+    }
+  }else{
+    ludoState.status=(color==="red"?"Red":"Blue")+" rolled "+dice+". Choose a highlighted token.";
+  }
+  syncLudoState();
+  renderLudo();
+}
+
+function ludoGlobalPosition(color,progress){
+  if(progress<0||progress>51)return null;
+  return (LUDO_START[color]+progress)%52;
+}
+
+function moveLudoToken(color,index){
+  if(color!==localLudoColor()||!ludoState.awaitingMove||!ludoCanMove(color,index))return;
+  const dice=ludoState.dice;
+  const old=ludoState.players[color][index];
+  const next=old===-1?0:old+dice;
+  ludoState.players[color][index]=next;
+
+  let captured=false;
+  const global=ludoGlobalPosition(color,next);
+  if(global!==null&&!LUDO_SAFE.has(global)){
+    const other=color==="red"?"blue":"red";
+    ludoState.players[other].forEach((op,oi)=>{
+      if(ludoGlobalPosition(other,op)===global){
+        ludoState.players[other][oi]=-1;
+        captured=true;
+      }
+    });
+  }
+
+  if(ludoState.players[color].every(p=>p===58)){
+    ludoState.winner=color;
+    ludoState.awaitingMove=false;
+    ludoState.status=(color==="red"?"Red":"Blue")+" wins the game!";
+  }else{
+    ludoState.awaitingMove=false;
+    if(dice===6){
+      ludoState.status=(color==="red"?"Red":"Blue")+" moved token "+(index+1)+(captured?" and captured a token":"")+". Roll again.";
+    }else{
+      ludoState.turn=color==="red"?"blue":"red";
+      ludoState.status=(color==="red"?"Red":"Blue")+" moved token "+(index+1)+(captured?" and captured a token":"")+". "+(ludoState.turn==="red"?"Red":"Blue")+" to roll.";
+    }
+  }
+  syncLudoState();
+  renderLudo();
+}
+
+function resetLudo(){
+  ludoState=createLudoState();
+  syncLudoState();
+  renderLudo();
+}
+
+function toggleLudo(open){
+  const shouldOpen=typeof open==="boolean"?open:ludoPanel.classList.contains("hidden");
+  ludoPanel.classList.toggle("hidden",!shouldOpen);
+  if(shouldOpen){
+    renderLudo();
+    ludoPanel.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+}
 
 const APPROVED_HOSTS=[
   "editor.learnwithchampak.live",
@@ -470,11 +686,17 @@ shareBtn.onclick=shareScreen;
 playSoundBtn.onclick=playRemoteSound;
 requestControlBtn.onclick=requestPointer;
 requestBrowserControlBtn.onclick=requestBrowserControl;
+ludoToggleBtn.onclick=()=>toggleLudo();
+ludoCloseBtn.onclick=()=>toggleLudo(false);
+ludoRollBtn.onclick=rollLudoDice;
+ludoNewBtn.onclick=resetLudo;
 hangupBtn.onclick=hangUp;
 sendBtn.onclick=sendChat;
 chatInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
 window.addEventListener("beforeunload",()=>{pc?.close();micStream?.getTracks().forEach(t=>t.stop());screenStream?.getTracks().forEach(t=>t.stop())});
 
+buildLudoBoard();
+renderLudo();
 loadInviteFromUrl();
 document.querySelectorAll(".nav-button[data-open-url]").forEach(button=>{
   button.addEventListener("click",()=>{
