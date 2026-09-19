@@ -476,3 +476,9 @@ chatInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
 window.addEventListener("beforeunload",()=>{pc?.close();micStream?.getTracks().forEach(t=>t.stop());screenStream?.getTracks().forEach(t=>t.stop())});
 
 loadInviteFromUrl();
+document.querySelectorAll(".nav-button[data-open-url]").forEach(button=>{
+  button.addEventListener("click",()=>{
+    const url=button.dataset.openUrl;
+    if(url)window.open(url,"_blank","noopener,noreferrer");
+  });
+});
