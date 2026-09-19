@@ -102,6 +102,7 @@
       <button id="shareBtn">Share Screen + Sound</button>
       <button id="playSoundBtn" class="secondary">Play Sound</button>
       <button id="requestControlBtn" class="secondary" disabled>Request Remote Pointer</button>
+      <button id="requestBrowserControlBtn" class="secondary" disabled>Request Browser Control</button>
       <button id="hangupBtn" class="danger">Hang Up</button>
     </nav>
 
@@ -114,6 +115,15 @@
       </div>
     </section>
 
+    <section id="browserControlRequest" class="control-request hidden">
+      <strong>The other participant wants to control your browser workspace.</strong>
+      <span>They can open only approved Learn With Champak / Programmer's Picnic pages in the workspace. They cannot control your operating system.</span>
+      <div>
+        <button id="allowBrowserControlBtn">Allow Browser Control</button>
+        <button id="denyBrowserControlBtn" class="secondary">Deny</button>
+      </div>
+    </section>
+
     <section id="localShareBox" class="local-share hidden">
       <h3>Your shared screen</h3>
       <div class="preview-wrap">
@@ -121,6 +131,45 @@
         <div id="remotePointer" class="remote-pointer hidden"></div>
       </div>
       <p>Remote pointer appears here when you allow it. Browser security prevents a web page from moving your real mouse or typing into other desktop applications.</p>
+    </section>
+
+    <section class="panel browser-workspace">
+      <div class="workspace-head">
+        <div>
+          <h2>Browser Workspace</h2>
+          <p>Open our editors here. When permission is granted, the other participant can control navigation to approved pages.</p>
+        </div>
+        <span id="browserControlState" class="workspace-state">Local control</span>
+      </div>
+
+      <div class="editor-links">
+        <button class="editorShortcut" data-url="https://editor.learnwithchampak.live/python-starter/editor/super/">Python Editor</button>
+        <button class="editorShortcut" data-url="https://editor.learnwithchampak.live/c-sharp/">C# Editor</button>
+        <button class="editorShortcut secondary" data-url="https://dsa.learnwithchampak.live/">DSA</button>
+        <button class="editorShortcut secondary" data-url="https://aiml.learnwithchampak.live/">AI / ML</button>
+      </div>
+
+      <div class="browser-bar">
+        <button id="workspaceBackBtn" class="secondary" title="Back">←</button>
+        <button id="workspaceForwardBtn" class="secondary" title="Forward">→</button>
+        <button id="workspaceReloadBtn" class="secondary" title="Reload">↻</button>
+        <input id="workspaceUrl" value="https://editor.learnwithchampak.live/python-starter/editor/super/" aria-label="Workspace URL">
+        <select id="workspaceTarget" title="Control target">
+          <option value="local">This browser</option>
+          <option value="remote" disabled>Remote browser</option>
+        </select>
+        <button id="workspaceGoBtn">Open</button>
+        <button id="workspaceNewTabBtn" class="secondary">New Tab</button>
+      </div>
+
+      <div class="workspace-frame-wrap">
+        <iframe id="workspaceFrame"
+          src="https://editor.learnwithchampak.live/python-starter/editor/super/"
+          title="Learn With Champak editor workspace"
+          sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads allow-scripts allow-same-origin"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <p class="small-note">Remote browser control is limited to this workspace's navigation. Direct remote typing/clicking inside a cross-origin editor requires a small control bridge inside that editor.</p>
     </section>
 
     <section class="panel">
@@ -140,6 +189,7 @@
       <div><strong>Sound</strong><span>Microphone audio without requiring a camera.</span></div>
       <div><strong>Screen + sound</strong><span>Share a tab/window/screen and request available system/tab audio.</span></div>
       <div><strong>Remote pointer</strong><span>Request permission and point/click on the remote shared-screen preview.</span></div>
+      <div><strong>Browser workspace</strong><span>Open our Python/C# editors and remotely control approved navigation with permission.</span></div>
     </div>
   </section>
 </main>
