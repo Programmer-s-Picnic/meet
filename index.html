@@ -153,6 +153,7 @@
       <button id="playSoundBtn" class="secondary">Play Sound</button>
       <button id="requestControlBtn" class="secondary" disabled>Request Remote Pointer</button>
       <button id="requestBrowserControlBtn" class="secondary" disabled>Request Browser Control</button>
+      <button id="ludoToggleBtn" class="game-button" disabled>Play Ludo</button>
       <button id="hangupBtn" class="danger">Hang Up</button>
     </nav>
 
@@ -181,6 +182,55 @@
         <div id="remotePointer" class="remote-pointer hidden"></div>
       </div>
       <p>Remote pointer appears here when you allow it. Browser security prevents a web page from moving your real mouse or typing into other desktop applications.</p>
+    </section>
+
+    <section id="ludoPanel" class="panel ludo-panel hidden">
+      <div class="ludo-head">
+        <div>
+          <span class="eyebrow">CLASSROOM BREAK</span>
+          <h2>Learn With Champak Ludo</h2>
+          <p>Two-player peer-to-peer Ludo. Host plays Red; student plays Blue.</p>
+        </div>
+        <button id="ludoCloseBtn" class="secondary">Close</button>
+      </div>
+
+      <div class="ludo-game-layout">
+        <div class="ludo-board-wrap">
+          <div id="ludoBoard" class="ludo-board" aria-label="Two-player Ludo board"></div>
+        </div>
+
+        <aside class="ludo-sidebar">
+          <div class="ludo-player-cards">
+            <div id="ludoRedCard" class="ludo-player-card red">
+              <span class="ludo-color-dot"></span>
+              <div><strong>Red</strong><small>Host</small></div>
+            </div>
+            <div id="ludoBlueCard" class="ludo-player-card blue">
+              <span class="ludo-color-dot"></span>
+              <div><strong>Blue</strong><small>Student</small></div>
+            </div>
+          </div>
+
+          <div class="ludo-turn-box">
+            <span>TURN</span>
+            <strong id="ludoTurn">Red</strong>
+            <small id="ludoStatus">Red rolls first.</small>
+          </div>
+
+          <div id="ludoDice" class="ludo-dice" aria-live="polite">–</div>
+
+          <button id="ludoRollBtn" class="ludo-roll" disabled>Roll Dice</button>
+          <button id="ludoNewBtn" class="secondary">New Game</button>
+
+          <div class="ludo-rules">
+            <strong>Quick rules</strong>
+            <span>Roll 6 to leave the yard.</span>
+            <span>Rolling 6 gives another turn.</span>
+            <span>Landing on an opponent sends it home, except on safe squares.</span>
+            <span>You need an exact roll to reach the finish.</span>
+          </div>
+        </aside>
+      </div>
     </section>
 
     <section class="panel browser-workspace">
