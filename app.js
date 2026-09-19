@@ -1,8 +1,9 @@
 const $=id=>document.getElementById(id);
 const statusEl=$("status"),joinCard=$("joinCard"),meeting=$("meeting");
-const hostTab=$("hostTab"),guestTab=$("guestTab"),hostPanel=$("hostPanel"),guestPanel=$("guestPanel");
-const startHostBtn=$("startHostBtn"),hostStep1=$("hostStep1"),hostStep2=$("hostStep2"),inviteCode=$("inviteCode"),copyInviteBtn=$("copyInviteBtn"),replyInput=$("replyInput"),finishHostBtn=$("finishHostBtn");
-const guestInviteInput=$("guestInviteInput"),joinBtn=$("joinBtn"),guestReplyBox=$("guestReplyBox"),guestReplyCode=$("guestReplyCode"),copyReplyBtn=$("copyReplyBtn");
+const hostTab=$("hostTab"),guestTab=$("guestTab"),hostPanel=$("hostPanel"),guestPanel=$("guestPanel"),modeTabs=$("modeTabs");
+const joinHeading=$("joinHeading"),joinSubheading=$("joinSubheading");
+const startHostBtn=$("startHostBtn"),hostStep1=$("hostStep1"),hostStep2=$("hostStep2"),inviteLink=$("inviteLink"),copyInviteBtn=$("copyInviteBtn"),shareInviteBtn=$("shareInviteBtn"),replyInput=$("replyInput"),finishHostBtn=$("finishHostBtn");
+const guestInviteInput=$("guestInviteInput"),guestManualBox=$("guestManualBox"),linkedInviteBox=$("linkedInviteBox"),joinBtn=$("joinBtn"),guestReplyBox=$("guestReplyBox"),guestReplyCode=$("guestReplyCode"),copyReplyBtn=$("copyReplyBtn");
 const remoteVideo=$("remoteVideo"),remoteEmpty=$("remoteEmpty"),localShareBox=$("localShareBox"),localShareVideo=$("localShareVideo");
 const micBtn=$("micBtn"),shareBtn=$("shareBtn"),playSoundBtn=$("playSoundBtn"),requestControlBtn=$("requestControlBtn"),hangupBtn=$("hangupBtn");
 const controlRequest=$("controlRequest"),allowControlBtn=$("allowControlBtn"),denyControlBtn=$("denyControlBtn"),remotePointer=$("remotePointer"),remoteControlBadge=$("remoteControlBadge");
@@ -11,6 +12,7 @@ const messages=$("messages"),chatInput=$("chatInput"),sendBtn=$("sendBtn");
 let pc=null,micStream=null,micTrack=null,screenStream=null,remoteStream=null,dataChannel=null;
 let screenVideoSender=null,screenAudioSender=null,primaryAudioSender=null;
 let micEnabled=true,canSendPointer=false,allowPointer=false,isHost=false;
+let inviteFromLink="";
 
 const rtcConfig={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
 
@@ -19,8 +21,39 @@ function showMeeting(){joinCard.classList.add("hidden");meeting.classList.remove
 function systemMessage(text){const p=document.createElement("p");p.className="system";p.textContent=text;messages.appendChild(p);messages.scrollTop=messages.scrollHeight}
 function chatMessage(text,me=false){const p=document.createElement("p");p.className="msg"+(me?" me":"");p.textContent=(me?"You: ":"Peer: ")+text;messages.appendChild(p);messages.scrollTop=messages.scrollHeight}
 
-hostTab.onclick=()=>{hostTab.classList.add("active");guestTab.classList.remove("active");hostPanel.classList.add("active");guestPanel.classList.remove("active")};
-guestTab.onclick=()=>{guestTab.classList.add("active");hostTab.classList.remove("active");guestPanel.classList.add("active");hostPanel.classList.remove("active")};
+function selectHost(){
+  hostTab.classList.add("active");guestTab.classList.remove("active");
+  hostPanel.classList.add("active");guestPanel.classList.remove("active");
+}
+function selectGuest(){
+  guestTab.classList.add("active");hostTab.classList.remove("active");
+  guestPanel.classList.add("active");hostPanel.classList.remove("active");
+}
+hostTab.onclick=selectHost;
+guestTab.onclick=selectGuest;
+
+function loadInviteFromUrl(){
+  const hash=location.hash.startsWith("#")?location.hash.slice(1):location.hash;
+  const params=new URLSearchParams(hash);
+  const raw=params.get("invite");
+  if(!raw)return;
+  try{
+    inviteFromLink=decodeURIComponent(raw);
+    decode(inviteFromLink);
+    guestInviteInput.value=inviteFromLink;
+    selectGuest();
+    modeTabs.classList.add("hidden");
+    guestManualBox.classList.add("hidden");
+    linkedInviteBox.classList.remove("hidden");
+    joinHeading.textContent="You are invited";
+    joinSubheading.textContent="Learn With Champak Meet • Audio and screen sharing";
+    joinBtn.textContent="Join This Meeting";
+    setStatus("Invite received");
+  }catch{
+    inviteFromLink="";
+    setStatus("Invalid invite");
+  }
+}
 
 async function getMicrophone(){
   if(micStream)return;
@@ -40,11 +73,9 @@ function setupPeer(){
   remoteStream=new MediaStream();
   remoteVideo.srcObject=remoteStream;
 
-  if(micTrack){
-    primaryAudioSender=pc.addTrack(micTrack,micStream);
-  }else{
-    primaryAudioSender=pc.addTransceiver("audio",{direction:"sendrecv"}).sender;
-  }
+  if(micTrack)primaryAudioSender=pc.addTrack(micTrack,micStream);
+  else primaryAudioSender=pc.addTransceiver("audio",{direction:"sendrecv"}).sender;
+
   screenVideoSender=pc.addTransceiver("video",{direction:"sendrecv"}).sender;
   screenAudioSender=pc.addTransceiver("audio",{direction:"sendrecv"}).sender;
 
@@ -64,8 +95,11 @@ function setupPeer(){
 function refreshConnection(){
   if(!pc)return;
   const s=pc.connectionState||pc.iceConnectionState;
-  if(s==="connected"||s==="completed"){setStatus("Connected","connected");showMeeting()}
-  else if(["new","checking","connecting"].includes(s))setStatus("Connecting…","connecting");
+  if(s==="connected"||s==="completed"){
+    setStatus("Connected","connected");
+    showMeeting();
+    if(location.hash)history.replaceState(null,"",location.pathname+location.search);
+  }else if(["new","checking","connecting"].includes(s))setStatus("Connecting…","connecting");
   else if(["failed","disconnected","closed"].includes(s))setStatus(s[0].toUpperCase()+s.slice(1));
 }
 
@@ -102,6 +136,11 @@ function waitForIce(){
   });
 }
 
+function makeInviteLink(offer){
+  const base=location.href.split("#")[0];
+  return base+"#invite="+encodeURIComponent(offer);
+}
+
 async function startHost(){
   startHostBtn.disabled=true;setStatus("Preparing audio…","connecting");isHost=true;
   await getMicrophone();
@@ -109,39 +148,74 @@ async function startHost(){
     setupPeer();
     dataChannel=pc.createDataChannel("meet-data");bindDataChannel();
     await pc.setLocalDescription(await pc.createOffer());
-    setStatus("Creating invite…","connecting");
+    setStatus("Creating invite link…","connecting");
     await waitForIce();
-    inviteCode.value=encode(pc.localDescription);
+    const offer=encode(pc.localDescription);
+    inviteLink.value=makeInviteLink(offer);
     hostStep1.classList.add("hidden");hostStep2.classList.remove("hidden");
-    setStatus("Send invite code");
-  }catch(e){startHostBtn.disabled=false;setStatus("Ready");alert("Could not start meeting: "+e.message)}
+    setStatus("Invite link ready");
+  }catch(e){
+    startHostBtn.disabled=false;setStatus("Ready");
+    alert("Could not start meeting: "+e.message);
+  }
 }
 
 async function joinMeeting(){
-  if(!guestInviteInput.value.trim())return alert("Paste the invite code first.");
+  const invite=inviteFromLink||guestInviteInput.value.trim();
+  if(!invite)return alert("Open an invite link or paste the invite data first.");
   joinBtn.disabled=true;setStatus("Preparing audio…","connecting");isHost=false;
   await getMicrophone();
   try{
     setupPeer();
-    await pc.setRemoteDescription(decode(guestInviteInput.value));
+    await pc.setRemoteDescription(decode(invite));
     await pc.setLocalDescription(await pc.createAnswer());
     setStatus("Creating reply…","connecting");
     await waitForIce();
     guestReplyCode.value=encode(pc.localDescription);
     guestReplyBox.classList.remove("hidden");
-    setStatus("Send reply code");
-  }catch(e){joinBtn.disabled=false;setStatus("Ready");alert("That invite code could not be used. Make sure it was copied completely.\n\n"+e.message)}
+    joinBtn.classList.add("hidden");
+    linkedInviteBox.classList.add("hidden");
+    setStatus("Send reply code to host");
+  }catch(e){
+    joinBtn.disabled=false;setStatus("Invite error");
+    alert("This invite link could not be used. Ask the host to create a new meeting link.\n\n"+e.message);
+  }
 }
 
 async function finishHost(){
   if(!replyInput.value.trim())return alert("Paste the reply code first.");
-  try{await pc.setRemoteDescription(decode(replyInput.value));setStatus("Connecting…","connecting");showMeeting()}
-  catch(e){alert("That reply code could not be used. Make sure it was copied completely.\n\n"+e.message)}
+  try{
+    await pc.setRemoteDescription(decode(replyInput.value));
+    setStatus("Connecting…","connecting");
+    showMeeting();
+  }catch(e){
+    alert("That reply code could not be used. Make sure it was copied completely.\n\n"+e.message);
+  }
 }
 
-async function copyText(el,btn){
-  try{await navigator.clipboard.writeText(el.value);const old=btn.textContent;btn.textContent="Copied!";setTimeout(()=>btn.textContent=old,1200)}
-  catch{el.select();document.execCommand("copy")}
+async function copyTextValue(value,btn){
+  try{
+    await navigator.clipboard.writeText(value);
+    const old=btn.textContent;btn.textContent="Copied!";
+    setTimeout(()=>btn.textContent=old,1200);
+  }catch{
+    const temp=document.createElement("textarea");
+    temp.value=value;document.body.appendChild(temp);temp.select();document.execCommand("copy");temp.remove();
+  }
+}
+
+async function shareInvite(){
+  const url=inviteLink.value;
+  if(!url)return;
+  if(navigator.share){
+    try{
+      await navigator.share({title:"Learn With Champak Meet",text:"Join my Learn With Champak meeting",url});
+      return;
+    }catch(e){
+      if(e.name==="AbortError")return;
+    }
+  }
+  await copyTextValue(url,shareInviteBtn);
 }
 
 function toggleMic(){
@@ -153,14 +227,9 @@ async function shareScreen(){
   if(screenStream)return stopSharing();
   try{
     screenStream=await navigator.mediaDevices.getDisplayMedia({
-      video:true,
-      audio:true,
-      systemAudio:"include",
-      surfaceSwitching:"include",
-      selfBrowserSurface:"exclude"
+      video:true,audio:true,systemAudio:"include",surfaceSwitching:"include",selfBrowserSurface:"exclude"
     });
-    const v=screenStream.getVideoTracks()[0];
-    const a=screenStream.getAudioTracks()[0];
+    const v=screenStream.getVideoTracks()[0],a=screenStream.getAudioTracks()[0];
     await screenVideoSender.replaceTrack(v);
     if(a)await screenAudioSender.replaceTrack(a);
     localShareVideo.srcObject=screenStream;
@@ -190,7 +259,7 @@ allowControlBtn.onclick=()=>{allowPointer=true;controlRequest.classList.add("hid
 denyControlBtn.onclick=()=>{allowPointer=false;controlRequest.classList.add("hidden");sendPacket({type:"control-denied"})};
 
 function pointerPacket(e,action){
-  if(!canSendPointer||remoteEmpty&&!remoteEmpty.classList.contains("hidden"))return;
+  if(!canSendPointer||!remoteEmpty.classList.contains("hidden"))return;
   const r=remoteVideo.getBoundingClientRect();
   if(!r.width||!r.height)return;
   const x=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
@@ -219,14 +288,22 @@ async function playRemoteSound(){
 function hangUp(){
   try{dataChannel?.close()}catch{} try{pc?.close()}catch{}
   micStream?.getTracks().forEach(t=>t.stop());screenStream?.getTracks().forEach(t=>t.stop());
-  pc=null;dataChannel=null;micStream=null;micTrack=null;screenStream=null;remoteStream=null;
-  remoteVideo.srcObject=null;localShareVideo.srcObject=null;setStatus("Ended");
-  meeting.classList.add("hidden");joinCard.classList.remove("hidden");
-  location.reload();
+  location.href=location.href.split("#")[0];
 }
 
-startHostBtn.onclick=startHost;joinBtn.onclick=joinMeeting;finishHostBtn.onclick=finishHost;
-copyInviteBtn.onclick=()=>copyText(inviteCode,copyInviteBtn);copyReplyBtn.onclick=()=>copyText(guestReplyCode,copyReplyBtn);
-micBtn.onclick=toggleMic;shareBtn.onclick=shareScreen;playSoundBtn.onclick=playRemoteSound;requestControlBtn.onclick=requestPointer;hangupBtn.onclick=hangUp;sendBtn.onclick=sendChat;
+startHostBtn.onclick=startHost;
+joinBtn.onclick=joinMeeting;
+finishHostBtn.onclick=finishHost;
+copyInviteBtn.onclick=()=>copyTextValue(inviteLink.value,copyInviteBtn);
+shareInviteBtn.onclick=shareInvite;
+copyReplyBtn.onclick=()=>copyTextValue(guestReplyCode.value,copyReplyBtn);
+micBtn.onclick=toggleMic;
+shareBtn.onclick=shareScreen;
+playSoundBtn.onclick=playRemoteSound;
+requestControlBtn.onclick=requestPointer;
+hangupBtn.onclick=hangUp;
+sendBtn.onclick=sendChat;
 chatInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
 window.addEventListener("beforeunload",()=>{pc?.close();micStream?.getTracks().forEach(t=>t.stop());screenStream?.getTracks().forEach(t=>t.stop())});
+
+loadInviteFromUrl();
