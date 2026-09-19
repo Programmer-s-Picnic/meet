@@ -12,7 +12,7 @@ The host no longer sends a raw WebRTC invite code.
 
 1. Host presses **Start Meeting**.
 2. The app creates a clickable **invite link**.
-3. Host sends that link by WhatsApp, email, chat, etc.
+3. Host presses **Send on WhatsApp**. WhatsApp opens with the meeting message and link already filled in; the host chooses the student/contact and sends it.
 4. Guest opens the link and sees **Join This Meeting**.
 5. Guest presses it and sends the generated reply code back to the host.
 6. Host pastes the reply code and presses **Connect**.
@@ -26,6 +26,8 @@ A reply code is still required in this pure-GitHub version. Eliminating the retu
 ## Features
 
 - Clickable invite link
+- **Send on WhatsApp** button with a pre-filled meeting message
+- **Send Reply on WhatsApp** button for the guest's return code
 - Web Share API button where supported
 - Microphone sound, mute/unmute
 - Meeting still usable when microphone permission is denied
@@ -48,3 +50,8 @@ A normal webpage cannot inject trusted mouse or keyboard input into another desk
 ## Networking
 
 The app uses `stun:stun.l.google.com:19302` for WebRTC peer discovery. Some restrictive networks still require a TURN relay server.
+
+
+## WhatsApp behavior
+
+The website uses WhatsApp's share URL with a pre-filled message. A normal web page cannot silently send a WhatsApp message on the user's behalf: WhatsApp still requires the user to choose a recipient (or chat) and press Send. This keeps sending under the user's control.
